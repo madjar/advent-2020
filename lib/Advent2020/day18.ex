@@ -77,7 +77,59 @@ defmodule Advent2020.Day18 do
     |> Enum.sum()
   end
 
+  defmodule Parse2 do
+    def parse(input) do
+      {result, []} = expression(input)
+      result
+    end
+
+    def expression(input) do
+      {left, r1} = additive_expression(input)
+
+      case r1 do
+        ["*" | r2] ->
+          {right, r3} = expression(r2)
+          {{:times, left, right}, r3}
+
+        _ ->
+          {left, r1}
+      end
+    end
+
+    def additive_expression(input) do
+      {left, r1} = primary(input)
+
+      case r1 do
+        ["+" | r2] ->
+          {right, r3} = additive_expression(r2)
+          {{:plus, left, right}, r3}
+
+        _ ->
+          {left, r1}
+      end
+    end
+
+    def primary(input) do
+      parse_digit(input) || parse_paren(input)
+    end
+
+    def parse_digit([digit | rest]) do
+      case Integer.parse(digit) do
+        {n, ""} -> {n, rest}
+        :error -> nil
+      end
+    end
+
+    def parse_paren(["(" | rest]) do
+      {expr, r1} = expression(rest)
+      [")" | r2] = r1
+      {expr, r2}
+    end
+  end
+
   def solve2(input) do
     input
+    |> Enum.map(fn line -> line |> Parse2.parse() |> compute end)
+    |> Enum.sum()
   end
 end
